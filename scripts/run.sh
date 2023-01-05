@@ -3,12 +3,19 @@
 # Startet den installierten JiveX DICOM Viewer
 # ============================================
 
+# Global variables
+START_DIR="$( pwd )"
+
 # i) create Java classpath
-ALL=""
-for f in $HOME/jivexdv/jar/**/*.jar; do
-    ALL=$ALL$f:
+ClassPath=""
+for archive in $HOME/jivexdv/jar/**/*.jar; do
+    ClassPath=$ClassPath$archive:
 done
-ALL=${ALL%?}
+ClassPath=${ClassPath%?}
 
 # ii) run application
-java -cp $ALL com.visustt.jiveX.client.jiveXViewer.JiveXViewer
+cd $HOME/jivexdv
+java -cp $ClassPath com.visustt.jiveX.client.jiveXViewer.JiveXViewer
+
+# iii) get back to starting working directory
+cd $START_DIR

@@ -5,9 +5,11 @@
 # =============================================================================
 
 # non JiveX DICOM Viewer stuff
-rm -rf $HOME/.jivex
-rm -f $HOME/.com.visustt.jivex.properties
-rm -f $HOME/Library/Preferences/com.visustt.jivex.plist
+[ -d "$HOME/.jivex" ] && rm -rf $HOME/.jivex
+[ -f "$HOME/.com.visustt.jivex.properties" ] && rm -f $HOME/.com.visustt.jivex.properties
+[ -f "$HOME/Library/Preferences/com.visustt.jivex.plist" ] && rm -f $HOME/Library/Preferences/com.visustt.jivex.plist
 
 # JiveX DICOM Viewer stuff
-rm -rf $HOME/jivexdv
+[ -d "$HOME/jivexdv" ] && rm -rf $HOME/jivexdv
+[ -d "$HOME/Desktop/JiveX DICOM Viewer" ] && rm -rf $HOME/Desktop/JiveX\ DICOM\ Viewer
+[ -f "$HOME/serverport" ] && rm -f $HOME/serverport
