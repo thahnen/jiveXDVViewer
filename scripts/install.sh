@@ -61,6 +61,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # viii) remove Windows / 32-bit macOS stuff
+echo "[jiveXDVViewer Installer] 5) Removing Windows / 32-bit macOS applications ..."
 [ -f "$HOME/.com.visustt.jivex.properties" ] && rm -f $HOME/.com.visustt.jivex.properties
 [ -d "$HOME/Desktop/JiveX DICOM Viewer" ] && rm -rf $HOME/Desktop/JiveX\ DICOM\ Viewer
 [ -d "$HOME/jivexdv/- Documentation JiveX DICOM Viewer.app" ] && rm -rf $HOME/jivexdv/-\ Documentation\ JiveX\ DICOM\ Viewer.app
