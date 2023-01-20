@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DVStart2" default="create.app">
+    <description>
+        DVStart2: Second, internal part of the official JiveX DICOM Viewer starter
+                  -> called from DVStart.app, applying changes from DVStart.ini before launching!
+    </description>
+
+    <!-- basic properties -->
+    <dirname property="current.dir" file="${ant.file}" />
+    <property file="${current.dir}/gradle.properties" />
+    <property name="icon.file" value="${current.dir}/src/main/resources/taskbarLogo.icns" />
+    <property name="build.dir" value="${current.dir}/build" />
+
+
+    <!-- load "bundleapp" task from appbundler-1.0ea.jar -->
+    <taskdef name="bundleapp"
+             classname="com.oracle.appbundler.AppBundlerTask"
+             classpath="${current.dir}/lib/appbundler-1.0ea.jar" />
+
+
+    <!-- Ant target to create macOS application -->
+    <target name="create.app">
+        <!-- 1) delete application (directory) if already exists -->
+        <delete dir="${build.dir}/${software.displayName}.app" failonerror="false" />
+
+        <!-- 2) get path for JRE/JDK 11 -->
+        <exec executable="/usr/libexec/java_home" failonerror="true" outputproperty="java.runtime">
+            <arg value="-v" />
+            <arg value="11" />
+        </exec>
+
+        <!-- 3) run "bundleapp" -->
+        <bundleapp outputdirectory="${build.dir}"
+                   name="${software.displayName}"
+                   displayname="${software.displayName}"
+                   identifier="${software.group}.${software.name}"
+                   shortversion="${software.version}"
+                   icon="${icon.file}"
+                   copyright="${software.vendor}"
+                   applicationCategory="${software.category}"
+                   mainclassname="${software.class}">
+            <runtime dir="${java.runtime}" />
+
+            <!-- the only jar file needed  -->
+            <classpath file="${build.dir}/libs/${software.name}.jar" />
+
+            <!-- JVM settings, will be partly overwritten by DVStart.app reading DVStart.ini -->
+            <option value="-Xms64m" />
+            <option value="-Xmx256m" />
+            <option value="-XX:PermSize=20m" />
+            <option value="-XX:MaxPermSize=20m" />
+            <option value="-Xdock:icon=Contents/Resources/${icon.file}" />
+            <option value="-Xdock:name=${software.displayName}" />
+            <option value="-Dapple.laf.useScreenMenuBar=false" />
+            <option value="-Dcom.apple.macos.use-file-dialog-packages=true" />
+            <option value="-Dcom.apple.macos.useScreenMenuBar=false" />
+            <option value="-Dapple.awt.application.name=${software.displayName}" />
+            <option value="-Dcom.apple.smallTabs=true" />
+        </bundleapp>
+    </target>
+</project>
