@@ -17,8 +17,5 @@ tasks.jar {
     manifest {
         attributes["Main-Class"] = project.ext["software.class"]
     }
+    finalizedBy(tasks.getByName("a-create.app"))
 }
-
-
-/** 5) Configure Ant "a-create.app" task */
-tasks.getByName("a-create.app") { dependsOn(tasks.jar) }
