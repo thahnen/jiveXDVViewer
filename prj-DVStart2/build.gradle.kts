@@ -1,5 +1,5 @@
 /** 1) Import Ant script */
-ant.importBuild("$projectDir/build.xml") { targetName -> "a-$targetName" }
+ant.importBuild("$projectDir/build.xml")
 
 
 /** 2) Gradle plugins (Java) */
@@ -17,5 +17,9 @@ tasks.jar {
     manifest {
         attributes["Main-Class"] = project.ext["software.class"]
     }
-    finalizedBy(tasks.getByName("a-create.app"))
 }
+
+
+/** 5) Configure Ant targets */
+tasks.getByName("create.app") { dependsOn(tasks.jar) }
+tasks.getByName("create.app.prj-variante_light") { dependsOn(tasks.jar) }

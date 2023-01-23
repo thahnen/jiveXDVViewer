@@ -12,10 +12,15 @@ The build logic requires an artifact, *appbundler-1.0ea.jar*, compiled from the 
 [TheInfiniteKind/appbundler](https://github.com/TheInfiniteKind/appbundler.git) via the Ant build
 script provided.
 
-To build this application run the following Gradle tasks:
-> gradlew jar
+To build the main application (JiveX DICOM Viewer) run the following Gradle task:
+> gradlew create.app
+
+To build the side application (JiveX DICOM CD Viewer) run the following Gradle task:
+> gradlew create.app.prj-variante_light
 
 ## Providing the application
 
-After running the Gradle task to build the application, copy it to JiveX DICOM Viewer installation "jar" subdirectory.
-Test it by running the "JiveX DICOM Viewer.app/Contents/MacOS/JavaAppLauncher" executable from within a Terminal window.
+After running the Gradle task to build the application, copy it to JiveX DICOM (CD) Viewer installation "jar"
+subdirectory. Test it by running either the "JiveX DICOM Viewer.app/Contents/MacOS/JavaAppLauncher" or the 
+"JiveX DICOM CD Viewer.app/Contents/MacOS/JavaAppLauncher" executable from within a Terminal window depending on the
+application created.

@@ -8,3 +8,6 @@
 
 # build directory
 build/
+
+# NSIS installer directories / files
+**/$TEMP/
