@@ -9,6 +9,7 @@
     <dirname property="current.dir" file="${ant.file}" />
     <property file="${current.dir}/gradle.properties" />
     <property name="icon.file" value="${current.dir}/../prj-DVStart/taskbarLogo.icns" />
+    <basename property="icon.filename" file="${icon.file}" />
     <property name="build.dir" value="${current.dir}/build" />
 
 
@@ -23,6 +24,14 @@
         <!-- save application as JiveX DICOM CD Viewer when property applied -->
         <property unless:set="prj-variante_light" name="software.displayName.final" value="${software.displayName}" />
         <property if:set="prj-variante_light"     name="software.displayName.final" value="${software.alternateName}" />
+
+        <!-- set version when property applied -->
+        <property unless:set="prj-variante_light" name="software.version.final" value="${software.version}" />
+        <property if:set="prj-variante_light"     name="software.version.final" value="${software.alternateVersion}" />
+
+        <!-- set release candidate when property applied -->
+        <property unless:set="prj-variante_light" name="software.RC.final" value="${software.RC}" />
+        <property if:set="prj-variante_light"     name="software.RC.final" value="${software.alternateRC}" />
 
         <!-- delete application (directory) if already exists -->
         <delete dir="${build.dir}/${software.displayName.final}.app" failonerror="false" />
@@ -42,7 +51,8 @@
                    name="${software.displayName.final}"
                    displayname="${software.displayName.final}"
                    identifier="${software.group}.${software.name}"
-                   shortversion="${software.version}"
+                   shortversion="${software.version.final}"
+                   version="${software.RC.final}"
                    icon="${icon.file}"
                    copyright="${software.vendor}"
                    applicationCategory="${software.category}"
@@ -57,7 +67,7 @@
             <option value="-Xmx256m" />
             <option value="-XX:PermSize=20m" />
             <option value="-XX:MaxPermSize=20m" />
-            <option value="-Xdock:icon=Contents/Resources/${icon.file}" />
+            <option value="-Xdock:icon=Contents/Resources/${icon.filename}" />
             <option value="-Xdock:name=${software.displayName.final}" />
             <option value="-Dapple.laf.useScreenMenuBar=false" />
             <option value="-Dcom.apple.macos.use-file-dialog-packages=true" />

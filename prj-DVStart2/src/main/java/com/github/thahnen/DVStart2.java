@@ -30,6 +30,7 @@ public class DVStart2 {
         final String starterClassName   = "com.visustt.jiveX.client.jiveXViewer.JiveXViewer";
         final String starterMethodName  = "main";
 
+
         // ii) get path to DVStart2 class, will be inside DVStart2.jar file inside app directory
         String path = DVStart2.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         System.out.println("[" + className + "] Path of " + className + ".class: " + path);
@@ -37,8 +38,12 @@ public class DVStart2 {
         // iii) get path to directory containing JAR
         String pathToApp = path.substring(0, path.lastIndexOf(appPostfix));
         pathToApp = pathToApp.substring(0, pathToApp.lastIndexOf("/"));
+        System.out.println("[" + className + "] Path of application: " + pathToApp);
 
-        // iv) get all JAR files inside directory excluding the ones in the app directory
+        // iv) Patch system property as JavaAppLauncher always starts at "/"
+        System.setProperty("user.dir", pathToApp);
+
+        // v) get all JAR files inside directory excluding the ones in the app directory
         List<URL> jarArchives = new ArrayList<>(Collections.emptyList());
         try (Stream<Path> stream = Files.walk(Paths.get(pathToApp), 44801)) {
             List<String> jars = stream.map(String::valueOf)
@@ -55,12 +60,12 @@ public class DVStart2 {
             throw new JarArchivesException("[" + className + "] No Jar archive(s) found, see exception: " + err);
         }
 
-        // v) extend classpath with all JAR archives found
+        // vi) extend classpath with all JAR archives found
         URLClassLoader classLoader = new URLClassLoader(jarArchives.toArray(new URL[0]),
                                                         ClassLoader.getSystemClassLoader());
         Thread.currentThread().setContextClassLoader(classLoader);
 
-        // vi) load main class and try to start application
+        // vii) load main class and try to start application
         try {
             Class<?> jiveXViewerClass = Class.forName(starterClassName, true, classLoader);
             Object jiveXViewer = jiveXViewerClass.newInstance();
