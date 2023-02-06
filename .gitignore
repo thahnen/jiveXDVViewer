@@ -7,7 +7,7 @@
 **/.DS_Store
 
 # build directory
-build/
+**/build/
 
 # NSIS installer directories / files
 **/$TEMP/
