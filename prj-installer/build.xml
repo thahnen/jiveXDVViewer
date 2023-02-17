@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jiveXDVViewer-setup" default="setup.build" xmlns:if="ant:if" xmlns:unless="ant:unless">
+    <description>
+        JiveX DICOM Viewer installer for macOS from official Setup.exe
+    </description>
+
+    <!-- basic properties (inside and outside project directory) -->
+    <dirname property="current.dir" file="${ant.file}" />
+    <property name="build.dir"      value="${current.dir}/build" />
+    <property name="setup.dir"      value="${build.dir}/setup" />
+
+    <property name="setup.exe"      value="${current.dir}/../bin/Setup-5.4.exe" />
+    <property name="DVStart2.dir"   value="${current.dir}/../prj-DVStart2" />
+
+
+    <!-- ======================================================================================
+                                        MACRO DEFINITIONS
+         ====================================================================================== -->
+
+    <!--
+        Macro to run the macOS implementation of 7-Zip to extract a specific artifact
+
+        IN:     dir     -> where to extract
+                file    -> archive to extract
+        OUT:    content of @{file} in @{dir}
+    -->
+    <macrodef name="zz7">
+        <attribute name="dir" />
+        <attribute name="file" />
+        <sequential>
+            <exec dir="@{dir}" executable="7zz" failonerror="true" discardoutput="true">
+                <arg line="x @{file} -y" />
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+    <!--
+        Macro to load the META-INF/MANIFEST.MF attributes from a specific archive
+
+        IN:     jar     -> path to the archive
+                prefix  -> prefix added to the attributes
+        OUT:    manifest attributes saved with prefix
+    -->
+    <macrodef name="Manifest-Attributes">
+        <attribute name="jar" />
+        <attribute name="prefix" />
+        <sequential>
+            <loadproperties>
+                <zipentry zipfile="@{jar}" name="META-INF/MANIFEST.MF" />
+                <filterchain>
+                    <prefixlines prefix="@{prefix}" />
+                </filterchain>
+            </loadproperties>
+        </sequential>
+    </macrodef>
+
+
+    <!--
+        Macro to call Gradle inside the DVStart2 project directory
+
+        IN:     task -> the Gradle task name
+        OUT:    %
+    -->
+    <macrodef name="gradlew">
+        <attribute name="task" />
+        <sequential>
+            <fail unless="DVStart2.dir" message="DVStart2.dir must be set to project directory" />
+            <exec dir="${DVStart2.dir}" executable="./gradlew" failonerror="true">
+                <arg line="@{task}" />
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+    <!-- ======================================================================================
+                                        EXTRA TARGET DEFINITIONS
+         ====================================================================================== -->
+
+    <target name="setup.Extraction" description="Extract the input Setup.exe">
+        <fail unless="input.file" message="" />
+        <fail unless="output.dir" message="" />
+
+        <delete dir="${output.dir}" />
+        <mkdir dir="${output.dir}" />
+
+        <property name="1.dir" value="${output.dir}/___1" />
+        <mkdir dir="${1.dir}/" />
+        <zz7 dir="${1.dir}" file="${input.file}" />
+
+        <property name="2.dir" value="${output.dir}/___2" />
+        <mkdir dir="${2.dir}/" />
+        <zz7 dir="${2.dir}" file="${1.dir}/$TEMP/nsistemp$9/install.jar" />
+        <delete dir="${1.dir}" failonerror="false" />
+
+        <property name="3.dir" value="${output.dir}/___3" />
+        <mkdir dir="${3.dir}/" />
+        <zz7 dir="${3.dir}" file="${2.dir}/tempJex.tar.gz" />
+        <delete dir="${2.dir}" failonerror="false" />
+
+        <zz7 dir="${output.dir}" file="${3.dir}/tempJex.tar" />
+        <delete dir="${3.dir}" failonerror="false" />
+    </target>
+
+
+    <target name="setup.Application" description="Copy the necessary application resources">
+        <fail unless="input.dir" message="" />
+        <fail unless="output.dir" message="" />
+
+        <!-- copy from installer -->
+        <copy todir="${output.dir}" overwrite="true">
+            <fileset dir="${input.dir}">
+                <include name="docs/**/*" />
+                <include name="jar/**/*" />
+                <include name="log/**/*" />
+                <include name="SampleImages/**/*" />
+                <include name="DVStart.ini" />
+                <include name="HomepageVisusTT.url" />
+            </fileset>
+        </copy>
+
+        <!-- delete file from external Git repository and input -->
+        <delete file="${output.dir}/.gitkeep" />
+        <delete dir="${input.dir}" />
+    </target>
+
+
+    <target name="setup.Resources" description="Copy the necessary installer resources">
+        <fail unless="res.dir" />
+        <fail unless="scripts.dir" message="" />
+        <fail unless="Resources.dir" message="" />
+
+        <!-- stuff for scripts.dir -->
+        <copy todir="${scripts.dir}" file="${res.dir}/postinstall" overwrite="true" />
+
+        <!-- stuff for Resources.dir -->
+        <!--<copy todir="${Resources.dir}" file="${res.dir}/banner.png" overwrite="true" />-->
+        <!--<copy todir="${Resources.dir}" file="${res.dir}/conclusion.html" overwrite="true" />-->
+        <copy todir="${Resources.dir}" file="${res.dir}/LICENSE.txt" overwrite="true" />
+        <copy todir="${Resources.dir}" file="${res.dir}/uninstall.sh" overwrite="true" />
+        <copy todir="${Resources.dir}" file="${res.dir}/welcome.html" overwrite="true" />
+    </target>
+
+
+    <target name="setup.DVStart2" description="Create the 'JiveX DICOM VIEWER.app' starter">
+        <fail unless="input.dir" message="" />
+        <fail unless="output.dir" message="" />
+
+        <!-- clear output directory -->
+        <delete dir="${output.dir}" />
+        <mkdir dir="${output.dir}" />
+
+        <!-- run Gradle and copy result, clean necessary for pkgutil issue -> see README.md -->
+        <gradlew task="clean" />
+        <gradlew task="create.app" />
+        <copy todir="${output.dir}">
+            <fileset dir="${input.dir}" includes="**" />
+        </copy>
+        <gradlew task="clean" />
+    </target>
+
+
+    <target name="setup.macOS-x64" description="Create and copy the actual installer">
+        <fail unless="input.dir" message="" />
+        <fail unless="output.file" message="" />
+
+        <!-- run script from external Git repository -->
+        <exec dir="${input.dir}" executable="/bin/bash" failonerror="true">
+            <arg line="build-macos-x64.sh jivex_dv 5.4.0" />
+        </exec>
+
+        <!-- copy final installer, delete necessary for pkgutil issue -> see README.md -->
+        <copy tofile="${output.file}"
+              file="${input.dir}/target/pkg/jivex_dv-macos-installer-x64-5.4.0.pkg"
+              overwrite="true" />
+        <delete dir="${input.dir}" />
+    </target>
+
+
+    <!-- ======================================================================================
+                                        MAIN TARGET DEFINITIONS
+         ====================================================================================== -->
+
+    <target name="setup.clean" description="">
+        <delete dir="${build.dir}" failonerror="false" />
+    </target>
+
+
+    <target name="setup.build" depends="setup.clean" description="">
+        <delete dir="${build.dir}" />
+        <mkdir dir="${setup.dir}" />
+
+        <!-- i) clone KosalaHerath/macos-installer-builder -->
+        <exec dir="${build.dir}" executable="git">
+            <arg line="clone https://github.com/KosalaHerath/macos-installer-builder.git" />
+        </exec>
+        <property name="installer.dir" value="${build.dir}/macos-installer-builder/macOS-x64" />
+
+        <!-- ii) unpack setup / installer files -->
+        <antcall target="setup.Extraction">
+            <param name="input.file" value="${setup.exe}" />
+            <param name="output.dir" value="${setup.dir}" />
+        </antcall>
+
+        <!-- iii) create final installer -->
+        <antcall target="setup.Application">
+            <param name="input.dir" value="${setup.dir}" />
+            <param name="output.dir" value="${installer.dir}/application" />
+        </antcall>
+
+        <!-- iv) get product name and version from installer files -->
+        <condition property="prj-variante_light" value="true">
+            <available file="${installer.dir}/application/jar/jiveXDVViewer_light.jar" />
+        </condition>
+        <Manifest-Attributes unless:set="prj-variante_light"
+                             jar="${installer.dir}/application/jar/jiveXDVViewer.jar"
+                             prefix="jivex_dv." />
+        <Manifest-Attributes if:set="prj-variante_light"
+                             jar="${installer.dir}/application/jar/jiveXDVViewer_light.jar"
+                             prefix="jivex_dv." />
+        <!--
+            TODO: Depending on this, build either normal or CD starter with the version and RC from attributes!
+            TODO: Depending on this, make version to match scheme A.B.C!
+            TODO: Depending on this, allow creating Patient CD from medium addon!
+        -->
+
+        <!-- iv) move custom resources -->
+        <antcall target="setup.Resources">
+            <param name="res.dir" value="${current.dir}/res" />
+            <param name="scripts.dir" value="${installer.dir}/darwin/scripts" />
+            <param name="Resources.dir" value="${installer.dir}/darwin/Resources" />
+        </antcall>
+
+        <!-- v) create "JiveX DICOM Viewer.app" and copy it to installer -->
+        <antcall target="setup.DVStart2">
+            <param name="input.dir" value="${DVStart2.dir}/build/JiveX DICOM Viewer.app" />
+            <param name="output.dir" value="${installer.dir}/application/JiveX DICOM Viewer.app" />
+        </antcall>
+
+        <!-- vi) create actual installer from script -->
+        <antcall target="setup.macOS-x64">
+            <param name="input.dir" value="${installer.dir}" />
+            <param name="output.file" value="${build.dir}/JiveX-DICOM-Viewer-5.4.0.pkg" />
+        </antcall>
+    </target>
+</project>
