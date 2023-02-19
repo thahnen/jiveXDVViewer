@@ -4,6 +4,13 @@ Verwendet den
 [KosalaHerath/macos-installer-builder](https://github.com/KosalaHerath/macos-installer-builder)
 zum Bauen des nativen macOS-Installer.
 
+## Ablage
+
+Der Installer entpackt die Dateien alle nach /Library/<Name>/<Version>, setzt einen Link auf den
+Starter des JiveX DICOM Viewer im /Applications-Ordner und registriert die Anwendung im System. An
+die registrierten Paket kommt man über
+> pkgutil --pkgs
+
 ## Problem mit dem Installer-Script
 
 Das Bash-Script kann keine Produkte erfassen, die Leerzeichen im Namen haben, daher wird hier nur

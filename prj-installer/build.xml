@@ -78,8 +78,9 @@
          ====================================================================================== -->
 
     <target name="setup.Extraction" description="Extract the input Setup.exe">
-        <fail unless="input.file" message="" />
-        <fail unless="output.dir" message="" />
+        <fail unless="input.file" message="No Setup.exe passed as 'input.file' parameter!" />
+        <fail unless="output.dir"
+              message="No output directory passed as 'output.dir' parameter!" />
 
         <delete dir="${output.dir}" />
         <mkdir dir="${output.dir}" />
@@ -104,8 +105,9 @@
 
 
     <target name="setup.Application" description="Copy the necessary application resources">
-        <fail unless="input.dir" message="" />
-        <fail unless="output.dir" message="" />
+        <fail unless="input.dir" message="No input directory passed as 'input.dir' parameter!" />
+        <fail unless="output.dir"
+              message="No output directory passed as 'output.dir' parameter!" />
 
         <!-- copy from installer -->
         <copy todir="${output.dir}" overwrite="true">
@@ -127,8 +129,10 @@
 
     <target name="setup.Resources" description="Copy the necessary installer resources">
         <fail unless="res.dir" />
-        <fail unless="scripts.dir" message="" />
-        <fail unless="Resources.dir" message="" />
+        <fail unless="scripts.dir"
+              message="No installer scripts directory passed as 'scripts.dir' parameter!" />
+        <fail unless="Resources.dir"
+              message="No installer resources directory passed as 'Resources.dir' parameter!" />
 
         <!-- stuff for scripts.dir -->
         <copy todir="${scripts.dir}" file="${res.dir}/postinstall" overwrite="true" />
@@ -143,8 +147,9 @@
 
 
     <target name="setup.DVStart2" description="Create the 'JiveX DICOM VIEWER.app' starter">
-        <fail unless="input.dir" message="" />
-        <fail unless="output.dir" message="" />
+        <fail unless="input.dir" message="No input directory passed as 'input.dir' parameter!" />
+        <fail unless="output.dir"
+              message="No output directory passed as 'output.dir' parameter!" />
 
         <!-- clear output directory -->
         <delete dir="${output.dir}" />
@@ -161,8 +166,9 @@
 
 
     <target name="setup.macOS-x64" description="Create and copy the actual installer">
-        <fail unless="input.dir" message="" />
-        <fail unless="output.file" message="" />
+        <fail unless="input.dir" message="No input directory passed as 'input.dir' parameter!" />
+        <fail unless="output.file"
+              message="No output directory passed as 'output.dir' parameter!" />
 
         <!-- run script from external Git repository -->
         <exec dir="${input.dir}" executable="/bin/bash" failonerror="true">
@@ -181,12 +187,12 @@
                                         MAIN TARGET DEFINITIONS
          ====================================================================================== -->
 
-    <target name="setup.clean" description="">
+    <target name="setup.clean" description="Clean the build directory for setup">
         <delete dir="${build.dir}" failonerror="false" />
     </target>
 
 
-    <target name="setup.build" depends="setup.clean" description="">
+    <target name="setup.build" depends="setup.clean" description="Build the setup">
         <delete dir="${build.dir}" />
         <mkdir dir="${setup.dir}" />
 
@@ -223,6 +229,9 @@
             TODO: Depending on this, make version to match scheme A.B.C!
             TODO: Depending on this, allow creating Patient CD from medium addon!
         -->
+        <echo message="DEBUG: PROP_PRODUCT_NAME -> ${jivex_dv.PROP_PRODUCT_NAME}" />
+        <echo message="DEBUG: PROP_PRODUCT_VERSION -> ${jivex_dv.PROP_PRODUCT_VERSION}" />
+        <echo message="DEBUG: PROP_PRODUCT_RC -> ${jivex_dv.PROP_PRODUCT_RC}" />
 
         <!-- iv) move custom resources -->
         <antcall target="setup.Resources">
@@ -242,5 +251,10 @@
             <param name="input.dir" value="${installer.dir}" />
             <param name="output.file" value="${build.dir}/JiveX-DICOM-Viewer-5.4.0.pkg" />
         </antcall>
+    </target>
+
+
+    <target name="setup.build.prj-variante_light" depends="setup.clean"
+            description="Build the setup (JiveX DICOM CD Viewer)">
     </target>
 </project>
