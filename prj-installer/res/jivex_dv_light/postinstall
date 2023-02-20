@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Path to JIVEX DICOM CD Viewer installation directory / app starter
+INSTALLATION=/Library/__PRODUCT__/__VERSION__
+APP_STARTER=${INSTALLATION}/JiveX\ DICOM\ CD\ VIEWER.app
+
+# Change permissions in installation directory
+cd "${INSTALLATION}" || exit
+chmod -R 755 .
+
+# Link JiveX DICOM CD Viewer starter to application directory
+rm -f "/Applications/JiveX DICOM CD Viewer.app"
+ln -s "${APP_STARTER}" "/Applications/JiveX DICOM CD Viewer.app"

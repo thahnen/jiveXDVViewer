@@ -25,6 +25,10 @@
         <property unless:set="prj-variante_light" name="software.displayName.final" value="${software.displayName}" />
         <property if:set="prj-variante_light"     name="software.displayName.final" value="${software.alternateName}" />
 
+        <!-- set application identifier when property applied (Otherwise macOS assumes it's the same app!) -->
+        <property unless:set="prj-variante_light" name="software.identifier.final" value="${software.identifier}" />
+        <property if:set="prj-variante_light"     name="software.identifier.final" value="${software.alternateIdentifier}" />
+
         <!-- set version when property applied -->
         <property unless:set="prj-variante_light" name="software.version.final" value="${software.version}" />
         <property if:set="prj-variante_light"     name="software.version.final" value="${software.alternateVersion}" />
@@ -50,7 +54,7 @@
         <bundleapp outputdirectory="${build.dir}"
                    name="${software.displayName.final}"
                    displayname="${software.displayName.final}"
-                   identifier="${software.group}.${software.name}"
+                   identifier="${software.identifier.final}"
                    shortversion="${software.version.final}"
                    version="${software.RC.final}"
                    icon="${icon.file}"

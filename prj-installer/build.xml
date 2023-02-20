@@ -8,8 +8,6 @@
     <dirname property="current.dir" file="${ant.file}" />
     <property name="build.dir"      value="${current.dir}/build" />
     <property name="setup.dir"      value="${build.dir}/setup" />
-
-    <property name="setup.exe"      value="${current.dir}/../bin/Setup-5.4.exe" />
     <property name="DVStart2.dir"   value="${current.dir}/../prj-DVStart2" />
 
 
@@ -71,6 +69,30 @@
             </exec>
         </sequential>
     </macrodef>
+
+
+    <!--
+        Script macro to patch the PROP_PRODUCT_VERSION to be of scheme A.B.C
+
+        IN:     version                         -> the PROP_PRODUCT_VERSION attribute
+        OUT:    patched.PROP_PRODUCT_VERSION    -> containing the patched version
+    -->
+    <scriptdef name="Patch-PROP_PRODUCT_VERSION" language="javascript">
+        <attribute name="version" />
+        <![CDATA[
+            var version = attributes.get("version");
+            project.setProperty(
+                "patched.PROP_PRODUCT_VERSION",
+                /^\d+\.\d+$/.test(version)
+                    ? version + ".0"
+                    : /^\d+\.\d+\.\d+$/.test(version)
+                        ? version
+                        : /^\d+\.\d+\.\d+\.\d+$/.test(version)
+                            ? version.substr(0, version.lastIndexOf("."))
+                            : ""
+            );
+        ]]>
+    </scriptdef>
 
 
     <!-- ======================================================================================
@@ -138,9 +160,9 @@
         <copy todir="${scripts.dir}" file="${res.dir}/postinstall" overwrite="true" />
 
         <!-- stuff for Resources.dir -->
-        <!--<copy todir="${Resources.dir}" file="${res.dir}/banner.png" overwrite="true" />-->
+        <!--<copy todir="${Resources.dir}" file="${res.dir}/../banner.png" overwrite="true" />-->
         <!--<copy todir="${Resources.dir}" file="${res.dir}/conclusion.html" overwrite="true" />-->
-        <copy todir="${Resources.dir}" file="${res.dir}/LICENSE.txt" overwrite="true" />
+        <copy todir="${Resources.dir}" file="${res.dir}/../LICENSE.txt" overwrite="true" />
         <copy todir="${Resources.dir}" file="${res.dir}/uninstall.sh" overwrite="true" />
         <copy todir="${Resources.dir}" file="${res.dir}/welcome.html" overwrite="true" />
     </target>
@@ -157,7 +179,8 @@
 
         <!-- run Gradle and copy result, clean necessary for pkgutil issue -> see README.md -->
         <gradlew task="clean" />
-        <gradlew task="create.app" />
+        <gradlew unless:set="prj-variante_light"    task="create.app" />
+        <gradlew if:set="prj-variante_light"        task="create.app.prj-variante_light" />
         <copy todir="${output.dir}">
             <fileset dir="${input.dir}" includes="**" />
         </copy>
@@ -171,13 +194,17 @@
               message="No output directory passed as 'output.dir' parameter!" />
 
         <!-- run script from external Git repository -->
+        <property unless:set="prj-variante_light"   name="alias" value="jivex_dv" />
+        <property if:set="prj-variante_light"       name="alias" value="jivex_dv_light" />
         <exec dir="${input.dir}" executable="/bin/bash" failonerror="true">
-            <arg line="build-macos-x64.sh jivex_dv 5.4.0" />
+            <arg value="build-macos-x64.sh" />
+            <arg value="${alias}" />
+            <arg value="${patched.PROP_PRODUCT_VERSION}" />
         </exec>
 
         <!-- copy final installer, delete necessary for pkgutil issue -> see README.md -->
         <copy tofile="${output.file}"
-              file="${input.dir}/target/pkg/jivex_dv-macos-installer-x64-5.4.0.pkg"
+              file="${input.dir}/target/pkg/${alias}-macos-installer-x64-${patched.PROP_PRODUCT_VERSION}.pkg"
               overwrite="true" />
         <delete dir="${input.dir}" />
     </target>
@@ -187,7 +214,17 @@
                                         MAIN TARGET DEFINITIONS
          ====================================================================================== -->
 
-    <target name="setup.clean" description="Clean the build directory for setup">
+    <target name="setup.init" description="Initialize necessary depending properties">
+        <property unless:set="prj-variante_light"
+                  name="setup.exe"
+                  value="${current.dir}/../bin/Setup-5.4.exe" />
+        <property if:set="prj-variante_light"
+                  name="setup.exe"
+                  value="${current.dir}/../prj-variante_light/bin/Setup-5.2.0.26.exe" />
+    </target>
+
+
+    <target name="setup.clean" depends="setup.init" description="Clean the build directory">
         <delete dir="${build.dir}" failonerror="false" />
     </target>
 
@@ -226,35 +263,58 @@
                              prefix="jivex_dv." />
         <!--
             TODO: Depending on this, build either normal or CD starter with the version and RC from attributes!
-            TODO: Depending on this, make version to match scheme A.B.C!
             TODO: Depending on this, allow creating Patient CD from medium addon!
         -->
         <echo message="DEBUG: PROP_PRODUCT_NAME -> ${jivex_dv.PROP_PRODUCT_NAME}" />
         <echo message="DEBUG: PROP_PRODUCT_VERSION -> ${jivex_dv.PROP_PRODUCT_VERSION}" />
+        <Patch-PROP_PRODUCT_VERSION version="${jivex_dv.PROP_PRODUCT_VERSION}" />
+        <fail message="PROP_PRODUCT_VERSION does not match scheme A.B / A.B.C / A.B.C.D">
+            <condition>
+                <equals arg1="${patched.PROP_PRODUCT_VERSION}" arg2="" />
+            </condition>
+        </fail>
+        <echo message="DEBUG: patched.PROP_PRODUCT_VERSION -> ${patched.PROP_PRODUCT_VERSION}" />
         <echo message="DEBUG: PROP_PRODUCT_RC -> ${jivex_dv.PROP_PRODUCT_RC}" />
 
         <!-- iv) move custom resources -->
         <antcall target="setup.Resources">
-            <param name="res.dir" value="${current.dir}/res" />
+            <param unless:set="prj-variante_light"
+                   name="res.dir"
+                   value="${current.dir}/res/jivex_dv" />
+            <param if:set="prj-variante_light"
+                   name="res.dir"
+                   value="${current.dir}/res/jivex_dv_light" />
             <param name="scripts.dir" value="${installer.dir}/darwin/scripts" />
             <param name="Resources.dir" value="${installer.dir}/darwin/Resources" />
         </antcall>
 
         <!-- v) create "JiveX DICOM Viewer.app" and copy it to installer -->
         <antcall target="setup.DVStart2">
-            <param name="input.dir" value="${DVStart2.dir}/build/JiveX DICOM Viewer.app" />
-            <param name="output.dir" value="${installer.dir}/application/JiveX DICOM Viewer.app" />
+            <param name="input.dir" value="${DVStart2.dir}/build/${jivex_dv.PROP_PRODUCT_NAME}.app" />
+            <param name="output.dir" value="${installer.dir}/application/${jivex_dv.PROP_PRODUCT_NAME}.app" />
         </antcall>
 
         <!-- vi) create actual installer from script -->
+        <loadresource property="patched.PROP_PRODUCT_NAME">
+            <propertyresource name="jivex_dv.PROP_PRODUCT_NAME" />
+            <filterchain>
+                <tokenfilter>
+                    <replacestring from=" " to="-" />
+                </tokenfilter>
+            </filterchain>
+        </loadresource>
+
         <antcall target="setup.macOS-x64">
             <param name="input.dir" value="${installer.dir}" />
-            <param name="output.file" value="${build.dir}/JiveX-DICOM-Viewer-5.4.0.pkg" />
+            <param name="output.file"
+                   value="${build.dir}/${patched.PROP_PRODUCT_NAME}-${patched.PROP_PRODUCT_VERSION}.pkg" />
         </antcall>
     </target>
 
 
-    <target name="setup.build.prj-variante_light" depends="setup.clean"
+    <target name="setup.build.prj-variante_light"
             description="Build the setup (JiveX DICOM CD Viewer)">
+        <property name="prj-variante_light" value="true" />
+        <antcall target="setup.build" />
     </target>
 </project>
