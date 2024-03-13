@@ -1,2 +1,0 @@
-# pyinstaller: Used to create macOS application files
-pyinstaller==5.7.0

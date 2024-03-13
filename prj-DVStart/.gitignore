@@ -1,9 +1,0 @@
-# PyCharm
-.idea/
-__pycache__/
-venv/
-
-# PyInstaller
-*.spec
-build/
-dist/
