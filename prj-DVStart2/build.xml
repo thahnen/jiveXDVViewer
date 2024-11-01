@@ -8,7 +8,7 @@
     <!-- basic properties -->
     <dirname property="current.dir" file="${ant.file}" />
     <property file="${current.dir}/gradle.properties" />
-    <property name="icon.file" value="${current.dir}/../prj-DVStart/taskbarLogo.icns" />
+    <property name="icon.file" value="${current.dir}/taskbarLogo.icns" />
     <basename property="icon.filename" file="${icon.file}" />
     <property name="build.dir" value="${current.dir}/build" />
 
